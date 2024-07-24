@@ -32,12 +32,12 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.Executor
 
-class FaceAnalyzer(
+/*class FaceAnalyzer(
     private val context: Context,
     private val imageCapture: ImageCapture,
     private val outputDirectory: File,
     private val executor: Executor,
-    private val onFaceDetected: (Boolean, Uri?) -> Unit
+    private val onFaceDetected: (Boolean, Boolean, Uri?) -> Unit
 ) : ImageAnalysis.Analyzer {
     private val highAccuracyOpts = FaceDetectorOptions.Builder()
         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
@@ -56,50 +56,55 @@ class FaceAnalyzer(
 
             detector.process(inputImage)
                 .addOnSuccessListener { faces ->
-                    var isLivenessDetected = false
+                    var faceDetected = false
+                    var blinkDetected = false
+
                     for (face in faces) {
+                        faceDetected = true
+
                         val leftEyeOpenProbability = face.leftEyeOpenProbability ?: -1.0f
                         val rightEyeOpenProbability = face.rightEyeOpenProbability ?: -1.0f
 
-                        if (leftEyeOpenProbability > 0.5 && rightEyeOpenProbability > 0.5) {
-                            isLivenessDetected = true
-                        }
-
-                        // Detect blink
                         val leftEyeClosed = leftEyeOpenProbability < 0.5
                         val rightEyeClosed = rightEyeOpenProbability < 0.5
 
                         if (previousLeftEyeOpen && previousRightEyeOpen && leftEyeClosed && rightEyeClosed) {
-                            // Blink detected
-                            capturePhoto { uri ->
-                                onFaceDetected(true, uri)
-                            }
+                            blinkDetected = true
                         }
 
                         previousLeftEyeOpen = !leftEyeClosed
                         previousRightEyeOpen = !rightEyeClosed
                     }
-                    if (!isLivenessDetected) {
-                        onFaceDetected(false, null)
+
+                    if (blinkDetected && faceDetected) {
+                        Log.d("FaceAnalyzer", "Blink detected")
+                        capturePhoto { uri ->
+                            onFaceDetected(faceDetected, blinkDetected, uri)
+                        }
+                    } else {
+                        Log.d("FaceAnalyzer", "Face detected: $faceDetected, Blink detected: $blinkDetected")
+                        onFaceDetected(faceDetected, blinkDetected, null)
                     }
+
                     imageProxy.close()
                 }
-                .addOnFailureListener {
-                    onFaceDetected(false, null)
+                .addOnFailureListener { e ->
+                    Log.e("FaceAnalyzer", "Face detection failed", e)
+                    onFaceDetected(false, false, null)
                     imageProxy.close()
                 }
-                .addOnCompleteListener {
-                    imageProxy.close()
-                }
+        } ?: run {
+            imageProxy.close()
         }
     }
 
     private fun capturePhoto(onImageCaptured: (Uri) -> Unit) {
-        val photoFile = File(outputDirectory, "gdsalesuser.jpg")
+        val photoFile = File(outputDirectory, "captured_image.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-        imageCapture.takePicture(outputOptions, executor, object: ImageCapture.OnImageSavedCallback {
+        imageCapture.takePicture(outputOptions, executor, object : ImageCapture.OnImageSavedCallback {
             override fun onError(exception: ImageCaptureException) {
+                Log.e("FaceAnalyzer", "Error capturing image", exception)
                 Toast.makeText(context, "Error capturing image: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
 
@@ -119,7 +124,7 @@ class FaceAnalyzer(
     private fun compressImage(imageFile: File): File {
         val bitmap = BitmapFactory.decodeFile(imageFile.path)
         val rotatedBitmap = rotateBitmapIfRequired(bitmap, imageFile)
-        val compressedFile = File(imageFile.parent, "gdsalesuser_compressed.jpg")
+        val compressedFile = File(imageFile.parent, "captured_image_compressed.jpg")
         FileOutputStream(compressedFile).use { out ->
             rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, out)
         }
@@ -154,3 +159,11 @@ class FaceAnalyzer(
     }
 }
 
+
+fun getOutputDirectory(context: Context): File {
+    val mediaDir = context.externalMediaDirs.firstOrNull()?.let {
+        File(it, "gdsales").apply { mkdirs() }
+    }
+
+    return if (mediaDir != null && mediaDir.exists()) mediaDir else context.filesDir
+}*/

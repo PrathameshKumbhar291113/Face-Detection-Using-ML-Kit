@@ -87,6 +87,17 @@ dependencies {
     implementation libs.face.detection
     implementation libs.play.services.mlkit.face.detection
     implementation libs.coil.compose
+    // Coroutines core library
+    implementation libs.kotlinx.coroutines.core
+
+    // Coroutines Android library
+    implementation libs.kotlinx.coroutines.android
+
+    // Google Play Services Tasks for await() extension
+    implementation libs.play.services.tasks
+
+    // Coroutines support for Google Play Services
+    implementation libs.kotlinx.coroutines.play.services
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
